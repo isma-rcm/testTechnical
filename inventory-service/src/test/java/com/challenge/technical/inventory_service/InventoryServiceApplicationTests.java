@@ -21,6 +21,7 @@ import com.challenge.technical.inventory_service.service.InventoryService;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 
 @ExtendWith(MockitoExtension.class)
 public class InventoryServiceApplicationTests {
@@ -43,17 +44,17 @@ public class InventoryServiceApplicationTests {
         inventoryService = new InventoryService(webClientBuilder, "http://localhost:8081");
     }
 
-    private void mockWebClientSuccess(ProductDto product) {
-        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
-        WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
-        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
+   private void mockWebClientSuccess(ProductDto product) {
+    WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
+    WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
+    WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
 
-        when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri(anyString(), anyString())).thenReturn(requestHeadersSpec);
-        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(ProductDto.class)).thenReturn(Mono.just(product));
-    }
+    when(webClient.get()).thenReturn(requestHeadersUriSpec);
+    when(requestHeadersUriSpec.uri(anyString(), anyLong())).thenReturn(requestHeadersSpec);
+    when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+    when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
+    when(responseSpec.bodyToMono(ProductDto.class)).thenReturn(Mono.just(product));
+}
 
     @Test
     void getAvailabilityDetails_ExternalServiceSuccess_ReturnsCombinedData() {
