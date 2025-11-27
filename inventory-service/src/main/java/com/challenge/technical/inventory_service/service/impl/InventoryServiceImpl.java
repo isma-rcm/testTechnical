@@ -26,6 +26,7 @@ public class InventoryServiceImpl implements InventoryService {
         this.webClient = webClientBuilder.baseUrl(catalogServiceUrl).build();
     }
 
+    @Override
     public Mono<InventoryDetail> getInventoryDetails(Long productId) {
 
         // 1. WebClient: Llamada HTTP Reactiva al CatalogService
