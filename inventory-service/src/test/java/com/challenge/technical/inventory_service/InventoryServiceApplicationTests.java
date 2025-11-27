@@ -16,7 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.challenge.technical.inventory_service.dto.InventoryDetail;
 import com.challenge.technical.inventory_service.dto.ProductDto;
-import com.challenge.technical.inventory_service.service.InventoryService;
+import com.challenge.technical.inventory_service.service.impl.InventoryServiceImpl;
 
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -32,7 +32,7 @@ public class InventoryServiceApplicationTests {
     @Mock
     private WebClient.Builder webClientBuilder;
 
-    private InventoryService inventoryService;
+    private InventoryServiceImpl inventoryService;
 
     @BeforeEach
     void setUp() {
@@ -41,7 +41,7 @@ public class InventoryServiceApplicationTests {
         when(webClientBuilder.build()).thenReturn(webClient);
         
         // Crea la instancia con el URL de prueba
-        inventoryService = new InventoryService(webClientBuilder, "http://localhost:8081");
+        inventoryService = new InventoryServiceImpl(webClientBuilder, "http://localhost:8081");
     }
 
    private void mockWebClientSuccess(ProductDto product) {
