@@ -1,48 +1,55 @@
-package com.challenge.technical.inventory_service;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mockito;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import com.challenge.technical.inventory_service.dto.InventoryDetail;
 import com.challenge.technical.inventory_service.dto.ProductDto;
 import com.challenge.technical.inventory_service.service.InventoryService;
 
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.*;
 import reactor.test.StepVerifier;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
-@SpringBootTest
-class InventoryServiceApplicationTests {
+@ExtendWith(MockitoExtension.class)
+public class InventoryServiceApplicationTests {
+    
+    // Mocks de la cadena de WebClient para simular la llamada HTTP
+    @Mock private WebClient webClient;
+    @Mock private WebClient.ResponseSpec responseSpec;
+    // ... otros mocks de WebClient ...
 
-	private final WebClient webClient = Mockito.mock(WebClient.class);
+    @InjectMocks private InventoryService inventoryService;
 
-	@InjectMocks
-	private InventoryService service;
+    // ... Método auxiliar para configurar el mock exitoso ...
+    private void mockWebClientSuccess(ProductDto product) {
+        // Encadenamiento de Mocks para simular: webClient.get().uri().retrieve().bodyToMono()
+        Mockito.when(webClient.get()).thenReturn(/* mock uri spec */);
+        Mockito.when(/* retrieve() */).thenReturn(responseSpec);
+        Mockito.when(responseSpec.bodyToMono(ProductDto.class)).thenReturn(Mono.just(product));
+    }
 
-	@Test
-	void getInventoryDetails_CatalogReturnsSuccess_ReturnsCombinedData() {
-		// GIVEN
-		ProductDto mockProduct = new ProductDto(10L, "Laptop", "...", new BigDecimal("100"), 5);
-		// Configurar el mock para que WebClient devuelva Mono.just(mockProduct)
-		mockWebClientSuccess(mockProduct);
+    @Test
+    void getAvailabilityDetails_ExternalServiceSuccess_ReturnsCombinedData() {
+        // GIVEN
+        ProductDto mockProduct = new ProductDto(101L, "Laptop G14", "...", BigDecimal.valueOf(1500.00), 30);
+        mockWebClientSuccess(mockProduct);
+        
+        // WHEN
+        Mono<ProductAvailability> resultMono = inventoryService.getAvailabilityDetails(101L);
 
-		// WHEN
-		Mono<InventoryDetail> resultMono = service.getInventoryDetails(10L);
-
-		// THEN
-		StepVerifier.create(resultMono)
-				.assertNext(details -> {
-					assertThat(details.productName()).isEqualTo("Laptop");
-					assertThat(details.stockQuantity()).isEqualTo(5);
-				})
-				.verifyComplete();
-
-		// Verificación de mocks (asegurar que la dependencia externa fue llamada)
-		Mockito.verify(webClient).get();
-	}
-
+        // THEN
+        StepVerifier.create(resultMono)
+            .assertNext(details -> {
+                // Assertions para el dato enriquecido
+                assertThat(details.productName()).isEqualTo("Laptop G14");
+            })
+            .verifyComplete();
+    }
 }
