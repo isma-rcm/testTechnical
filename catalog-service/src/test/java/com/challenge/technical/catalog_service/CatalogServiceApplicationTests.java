@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CatalogServiceUnitTest {
 
-	// 2. MOCK: La dependencia externa (R2DBC Repository)
+	// 2. MOCK: La dependencia externa 
 	@Mock
 	private ProductRepository repository;
 
@@ -43,6 +43,8 @@ class CatalogServiceUnitTest {
 				.expectErrorSatisfies(e -> assertThat(e).isInstanceOf(ResourceNotFoundException.class))
 				.verify(); // Cobertura de pruebas en lógica de negocio (manejo de errores)
 	}
+
+	// Test para los metodos get del controlador
 
 	@Test
 	void getAllProducts_whenProductsExist_returnsAllProducts() {

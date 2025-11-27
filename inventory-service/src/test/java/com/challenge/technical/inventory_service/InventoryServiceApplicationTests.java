@@ -1,55 +1,74 @@
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+package com.challenge.technical.inventory_service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.challenge.technical.inventory_service.dto.InventoryDetail;
 import com.challenge.technical.inventory_service.dto.ProductDto;
 import com.challenge.technical.inventory_service.service.InventoryService;
 
-import reactor.core.publisher.*;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(MockitoExtension.class)  // Quita @SpringBootTest
 public class InventoryServiceApplicationTests {
+
+    @Mock
+    private WebClient webClient;
     
-    // Mocks de la cadena de WebClient para simular la llamada HTTP
-    @Mock private WebClient webClient;
-    @Mock private WebClient.ResponseSpec responseSpec;
-    // ... otros mocks de WebClient ...
+    @Mock
+    private WebClient.Builder webClientBuilder;
 
-    @InjectMocks private InventoryService inventoryService;
+    private InventoryService inventoryService;
 
-    // ... Método auxiliar para configurar el mock exitoso ...
+    @BeforeEach
+    void setUp() {
+        // Configura el builder mock
+        when(webClientBuilder.baseUrl(anyString())).thenReturn(webClientBuilder);
+        when(webClientBuilder.build()).thenReturn(webClient);
+        
+        // Crea la instancia manualmente
+        inventoryService = new InventoryService(webClientBuilder);
+    }
+
     private void mockWebClientSuccess(ProductDto product) {
-        // Encadenamiento de Mocks para simular: webClient.get().uri().retrieve().bodyToMono()
-        Mockito.when(webClient.get()).thenReturn(/* mock uri spec */);
-        Mockito.when(/* retrieve() */).thenReturn(responseSpec);
-        Mockito.when(responseSpec.bodyToMono(ProductDto.class)).thenReturn(Mono.just(product));
+        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
+        WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
+        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
+
+        when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(anyString())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(ProductDto.class)).thenReturn(Mono.just(product));
     }
 
     @Test
     void getAvailabilityDetails_ExternalServiceSuccess_ReturnsCombinedData() {
         // GIVEN
-        ProductDto mockProduct = new ProductDto(101L, "Laptop G14", "...", BigDecimal.valueOf(1500.00), 30);
+        ProductDto mockProduct = new ProductDto(101L, "Laptop G14", "High performance laptop",
+                new BigDecimal("1499.99"), 25);
         mockWebClientSuccess(mockProduct);
-        
-        // WHEN
-        Mono<ProductAvailability> resultMono = inventoryService.getAvailabilityDetails(101L);
 
+        // WHEN
+        Mono<InventoryDetail> resultMono = inventoryService.getInventoryDetails(101L);
+        
         // THEN
         StepVerifier.create(resultMono)
-            .assertNext(details -> {
-                // Assertions para el dato enriquecido
-                assertThat(details.productName()).isEqualTo("Laptop G14");
-            })
-            .verifyComplete();
+                .assertNext(details -> {
+                    assertThat(details.productName()).isEqualTo("Laptop G14");
+                    assertThat(details.stock()).isEqualTo(25);
+                })
+                .verifyComplete();
     }
 }
