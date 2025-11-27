@@ -22,7 +22,7 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public Mono<Product> findById(Long id) {
         return productRepository.findById(id)
-                // Manejo de errores en flujos reactivos (similar a Optional.orElseThrow)
+                // Manejo de errores en flujos reactivos
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Product not found: " + id)));
     }
     
