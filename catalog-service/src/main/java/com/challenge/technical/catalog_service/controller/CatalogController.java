@@ -11,12 +11,13 @@ import reactor.core.publisher.Mono;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/catalog")
 public class CatalogController {
     private final CatalogService service;   
-
+// --- CRUD OPERATIONS ---
     @GetMapping("/{id}")
     public Mono<Product> getProductById(@PathVariable Long id) {
         return service.findById(id);

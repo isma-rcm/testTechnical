@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<String> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        // Devuelve el código 404 (NOT_FOUND) con el mensaje de error.
+        // Devuelve el código 404 (NOT_FOUND) para evitar mensajes de error.
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                              .body(ex.getMessage());
     }

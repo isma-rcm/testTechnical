@@ -1,8 +1,6 @@
 package com.challenge.technical.catalog_service.exception;
 
-/**
- * Thrown when a requested resource cannot be found.
- */
+//Manejo de excepciones personalizadas para recursos no encontrados
 public class ResourceNotFoundException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
@@ -18,12 +16,6 @@ public class ResourceNotFoundException extends RuntimeException {
         super(message, cause);
     }
 
-    /**
-     * Convenience constructor to build a consistent not-found message.
-     *
-     * Example: new ResourceNotFoundException("Product", "id", 42)
-     * produces: "Product not found with id : '42'"
-     */
     public ResourceNotFoundException(String resourceName, String fieldName, Object fieldValue) {
         super(String.format("%s not found with %s : '%s'", resourceName, fieldName, String.valueOf(fieldValue)));
     }

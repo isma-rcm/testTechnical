@@ -6,7 +6,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface CatalogService {
-
+    // --- CRUD OPERATIONS ---
     public Mono<Product> findById(Long id);
 
     public Mono<Product> create(Product product);
@@ -14,7 +14,7 @@ public interface CatalogService {
     public Mono<Product> update(Long id, Product product);
 
     public Flux<Product> findAll();
-
+    
     public Flux<Product> findLowStockProducts(int minStock);
 
     public Mono<Void> deleteById(Long id);
