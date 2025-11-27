@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.challenge.technical.inventory_service.dto.InventoryDetail;
 import com.challenge.technical.inventory_service.dto.ProductDto;
-import com.challenge.technical.inventory_service.exception.ExternalServiceException;
+import com.challenge.technical.inventory_service.exception.ResourceNotFoundException;
 import com.challenge.technical.inventory_service.service.InventoryService;
 
 import reactor.core.publisher.Mono;
@@ -35,11 +35,11 @@ public class InventoryServiceImpl implements InventoryService {
                 .retrieve()
                 // 2. Manejo de errores en flujos reactivos (ej. 4xx/5xx)
                 .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                        clientResponse -> Mono.error(new ExternalServiceException(
+                        clientResponse -> Mono.error(new ResourceNotFoundException(
                                 "Error del CatalogService (Status: " + clientResponse.statusCode() + ")")))
                 .bodyToMono(ProductDto.class)
                 // Manejo de error de conexión
-                .onErrorResume(e -> Mono.error(new ExternalServiceException("Fallo de conexión con CatalogService.")));
+                .onErrorResume(e -> Mono.error(new ResourceNotFoundException("Fallo de conexión con CatalogService.")));
 
         // 3. Map (Transformación funcional)
         return productMono.map(product -> {
