@@ -20,8 +20,9 @@ import com.challenge.technical.inventory_service.service.InventoryService;
 
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import static org.mockito.ArgumentMatchers.any;
 
-@ExtendWith(MockitoExtension.class)  // Quita @SpringBootTest
+@ExtendWith(MockitoExtension.class)
 public class InventoryServiceApplicationTests {
 
     @Mock
@@ -38,8 +39,8 @@ public class InventoryServiceApplicationTests {
         when(webClientBuilder.baseUrl(anyString())).thenReturn(webClientBuilder);
         when(webClientBuilder.build()).thenReturn(webClient);
         
-        // Crea la instancia manualmente
-        inventoryService = new InventoryService(webClientBuilder);
+        // Crea la instancia con el URL de prueba
+        inventoryService = new InventoryService(webClientBuilder, "http://localhost:8081");
     }
 
     private void mockWebClientSuccess(ProductDto product) {
@@ -48,8 +49,9 @@ public class InventoryServiceApplicationTests {
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
 
         when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri(anyString())).thenReturn(requestHeadersSpec);
+        when(requestHeadersUriSpec.uri(anyString(), anyString())).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(ProductDto.class)).thenReturn(Mono.just(product));
     }
 
@@ -67,7 +69,29 @@ public class InventoryServiceApplicationTests {
         StepVerifier.create(resultMono)
                 .assertNext(details -> {
                     assertThat(details.productName()).isEqualTo("Laptop G14");
-                    assertThat(details.stock()).isEqualTo(25);
+                    assertThat(details.quantity()).isEqualTo(25);
+                    assertThat(details.status()).isEqualTo("IN_STOCK");
+                    assertThat(details.warehouse()).isEqualTo("Unknown");
+                })
+                .verifyComplete();
+    }
+    
+    @Test
+    void getInventoryDetails_whenOutOfStock_returnsOutOfStockStatus() {
+        // GIVEN
+        ProductDto mockProduct = new ProductDto(102L, "Mouse", "Wireless mouse",
+                new BigDecimal("29.99"), 0);
+        mockWebClientSuccess(mockProduct);
+
+        // WHEN
+        Mono<InventoryDetail> resultMono = inventoryService.getInventoryDetails(102L);
+        
+        // THEN
+        StepVerifier.create(resultMono)
+                .assertNext(details -> {
+                    assertThat(details.productName()).isEqualTo("Mouse");
+                    assertThat(details.quantity()).isEqualTo(0);
+                    assertThat(details.status()).isEqualTo("OUT_OF_STOCK");
                 })
                 .verifyComplete();
     }
