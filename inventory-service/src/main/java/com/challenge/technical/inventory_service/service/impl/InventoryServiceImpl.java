@@ -17,48 +17,51 @@ import reactor.core.publisher.Mono;
 
 @Service
 public class InventoryServiceImpl implements InventoryService {
-    private final WebClient webClient;
+        private final WebClient webClient;
 
-    private final Map<Long, String> stockLocation = Map.of(10L, "Warehouse A", 20L, "Warehouse B");
+        private final Map<Long, String> stockLocation = Map.of(10L, "Warehouse A", 20L, "Warehouse B");
 
-    public InventoryServiceImpl(WebClient.Builder webClientBuilder,
-            @Value("${catalog.service.url}") String catalogServiceUrl) {
-        this.webClient = webClientBuilder.baseUrl(catalogServiceUrl).build();
-    }
+        // Constructor inyectado con WebClient.Builder y URL del servicio de catálogo
+        public InventoryServiceImpl(WebClient.Builder webClientBuilder,
+                        @Value("${catalog.service.url}") String catalogServiceUrl) {
+                this.webClient = webClientBuilder.baseUrl(catalogServiceUrl).build();
+        }
 
-    @Override
-    public Mono<InventoryDetail> getInventoryDetails(Long productId) {
+        @Override
+        public Mono<InventoryDetail> getInventoryDetails(Long productId) {
+                // uso de WebClient: Llamada HTTP Reactiva al CatalogService
+                Mono<ProductDto> productMono = webClient.get()
+                                .uri("/{id}", productId)
+                                .retrieve()
+                                // Manejo de errores para el flujos reactivo
+                                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                                                clientResponse -> Mono.error(new ResourceNotFoundException(
+                                                                "Error del CatalogService (Status: "
+                                                                                + clientResponse.statusCode() + ")")))
+                                .bodyToMono(ProductDto.class)
+                                // Manejo de error de conexión
+                                .onErrorResume(e -> Mono.error(new ResourceNotFoundException(
+                                                "Fallo de conexión con CatalogService.")));
 
-        // 1. WebClient: Llamada HTTP Reactiva al CatalogService
-        Mono<ProductDto> productMono = webClient.get()
-                .uri("/{id}", productId)
-                .retrieve()
-                // 2. Manejo de errores en flujos reactivos (ej. 4xx/5xx)
-                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                        clientResponse -> Mono.error(new ResourceNotFoundException(
-                                "Error del CatalogService (Status: " + clientResponse.statusCode() + ")")))
-                .bodyToMono(ProductDto.class)
-                // Manejo de error de conexión
-                .onErrorResume(e -> Mono.error(new ResourceNotFoundException("Fallo de conexión con CatalogService.")));
+                // uso de map para transformar ProductDto a InventoryDetail
+                return productMono.map(product -> {
 
-        // 3. Map (Transformación funcional)
-        return productMono.map(product -> {
+                        // Uso de Predicate para la lógica de negocio
+                        Predicate<Integer> isAvailable = stock -> stock > 0;
+                        String status = isAvailable.test(product.stock()) ? "IN_STOCK" : "OUT_OF_STOCK";
 
-            // 4. Predicate para la lógica de negocio
-            Predicate<Integer> isAvailable = stock -> stock > 0;
-            String status = isAvailable.test(product.stock()) ? "IN_STOCK" : "OUT_OF_STOCK";
+                        // Uso de Consumer para registrar un evento
+                        Consumer<ProductDto> logger = p -> System.out
+                                        .println("Inventory Check: Retrieved product " + p.id() + " with status "
+                                                        + status);
+                        logger.accept(product);
 
-            // 5. Consumer para registrar un evento (ej. logging)
-            Consumer<ProductDto> logger = p -> System.out
-                    .println("Inventory Check: Retrieved product " + p.id() + " with status " + status);
-            logger.accept(product);
-
-            return new InventoryDetail(
-                    product.id(),
-                    product.name(),
-                    product.stock(),
-                    status,
-                    stockLocation.getOrDefault(product.id(), "Unknown"));
-        });
-    }
+                        return new InventoryDetail(
+                                        product.id(),
+                                        product.name(),
+                                        product.stock(),
+                                        status,
+                                        stockLocation.getOrDefault(product.id(), "Unknown"));
+                });
+        }
 }

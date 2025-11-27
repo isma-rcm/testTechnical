@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 
 @ExtendWith(MockitoExtension.class)
-public class InventoryServiceApplicationTests {
+public class InventoryServiceUnitTests {
 
     @Mock
     private WebClient webClient;
@@ -36,11 +36,11 @@ public class InventoryServiceApplicationTests {
 
     @BeforeEach
     void setUp() {
-        // Configura el builder mock
+        // Configuracion del builder mock
         when(webClientBuilder.baseUrl(anyString())).thenReturn(webClientBuilder);
         when(webClientBuilder.build()).thenReturn(webClient);
         
-        // Crea la instancia con el URL de prueba
+        // Instancia para el url de prueba de catalogo
         inventoryService = new InventoryServiceImpl(webClientBuilder, "http://localhost:8081");
     }
 
@@ -58,15 +58,10 @@ public class InventoryServiceApplicationTests {
 
     @Test
     void getAvailabilityDetails_ExternalServiceSuccess_ReturnsCombinedData() {
-        // GIVEN
         ProductDto mockProduct = new ProductDto(101L, "Laptop G14", "High performance laptop",
                 new BigDecimal("1499.99"), 25);
         mockWebClientSuccess(mockProduct);
-
-        // WHEN
         Mono<InventoryDetail> resultMono = inventoryService.getInventoryDetails(101L);
-        
-        // THEN
         StepVerifier.create(resultMono)
                 .assertNext(details -> {
                     assertThat(details.productName()).isEqualTo("Laptop G14");
@@ -79,15 +74,10 @@ public class InventoryServiceApplicationTests {
     
     @Test
     void getInventoryDetails_whenOutOfStock_returnsOutOfStockStatus() {
-        // GIVEN
         ProductDto mockProduct = new ProductDto(102L, "Mouse", "Wireless mouse",
                 new BigDecimal("29.99"), 0);
         mockWebClientSuccess(mockProduct);
-
-        // WHEN
         Mono<InventoryDetail> resultMono = inventoryService.getInventoryDetails(102L);
-        
-        // THEN
         StepVerifier.create(resultMono)
                 .assertNext(details -> {
                     assertThat(details.productName()).isEqualTo("Mouse");

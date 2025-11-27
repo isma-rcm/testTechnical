@@ -15,12 +15,6 @@ public class ResourceNotFoundException extends RuntimeException {
         super(message, cause);
     }
 
-    /**
-     * Convenience constructor to build a consistent not-found message.
-     *
-     * Example: new ResourceNotFoundException("Product", "id", 42)
-     * produces: "Product not found with id : '42'"
-     */
     public ResourceNotFoundException(String resourceName, String fieldName, Object fieldValue) {
         super(String.format("%s not found with %s : '%s'", resourceName, fieldName, String.valueOf(fieldValue)));
     }
